@@ -82,7 +82,7 @@ class SLMTrainer:
         self.output_dir = output_dir
         self.use_lora = use_lora
         
-        print(f"Initializing SLM Trainer")
+        print("Initializing SLM Trainer")
         print(f"  Base model: {model_name}")
         print(f"  Output directory: {output_dir}")
         print(f"  LoRA: {use_lora}")
