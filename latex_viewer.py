@@ -73,12 +73,26 @@ def create_latex_preview(df, output_file):
 <html>
 <head>
     <title>AI Mathematical Olympiad Problems</title>
+    <meta charset="UTF-8">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
@@ -96,9 +110,17 @@ def create_latex_preview(df, output_file):
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
+        .problem-header h2 {
+            margin: 0 0 10px 0;
+        }
+        .problem-header p {
+            margin: 5px 0;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
         .problem-text {
-            line-height: 1.8;
-            font-size: 16px;
+            line-height: 2;
+            font-size: 18px;
             color: #333;
         }
         .answer {
@@ -107,10 +129,12 @@ def create_latex_preview(df, output_file):
             background-color: #e8f4f8;
             border-left: 4px solid #3498db;
             border-radius: 4px;
+            font-size: 16px;
         }
         h1 {
             text-align: center;
             color: #2c3e50;
+            margin-bottom: 40px;
         }
     </style>
 </head>
@@ -119,7 +143,8 @@ def create_latex_preview(df, output_file):
 """
     
     for idx, row in df.iterrows():
-        problem_text = row['problem'].replace('$', '\\$')
+        # Don't escape dollar signs - MathJax needs them as-is
+        problem_text = row['problem']
         
         html_content += f"""
     <div class="problem">

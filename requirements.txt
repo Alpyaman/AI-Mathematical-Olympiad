@@ -1,0 +1,21 @@
+# Core dependencies
+pandas
+numpy
+scikit-learn
+
+# Math and symbolic computation
+sympy
+
+# Deep Learning (for SLM training)
+torch
+transformers
+datasets
+accelerate
+peft
+bitsandbytes
+
+# Optional: for evaluation
+polars
+matplotlib
+seaborn
+
