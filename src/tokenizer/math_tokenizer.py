@@ -24,7 +24,7 @@ class MathTokenizer:
 
     # Mathematical symbols and their LaTeX equivalents
     MATH_SYMBOLS = {
-        # Greek letters
+        # Greek letters (lowercase)
         "α": "\\alpha", "β": "\\beta", "γ": "\\gamma", "δ": "\\delta",
         "ε": "\\epsilon", "ζ": "\\zeta", "η": "\\eta", "θ": "\\theta",
         "ι": "\\iota", "κ": "\\kappa", "λ": "\\lambda", "μ": "\\mu",
@@ -32,34 +32,90 @@ class MathTokenizer:
         "σ": "\\sigma", "τ": "\\tau", "υ": "\\upsilon", "φ": "\\phi",
         "χ": "\\chi", "ψ": "\\psi", "ω": "\\omega",
 
-        # Uppercase Greek
+        # Greek letters (uppercase)
         "Γ": "\\Gamma", "Δ": "\\Delta", "Θ": "\\Theta", "Λ": "\\Lambda",
         "Ξ": "\\Xi", "Π": "\\Pi", "Σ": "\\Sigma", "Φ": "\\Phi",
         "Ψ": "\\Psi", "Ω": "\\Omega",
 
+        # Blackboard bold (number sets)
+        "ℕ": "\\mathbb{N}", "ℤ": "\\mathbb{Z}", "ℚ": "\\mathbb{Q}",
+        "ℝ": "\\mathbb{R}", "ℂ": "\\mathbb{C}", "ℙ": "\\mathbb{P}",
+        "𝔸": "\\mathbb{A}", "𝔹": "\\mathbb{B}", "𝔼": "\\mathbb{E}",
+        "𝔽": "\\mathbb{F}", "𝔾": "\\mathbb{G}", "ℍ": "\\mathbb{H}",
+
+        # Superscripts
+        "⁰": "^0", "¹": "^1", "²": "^2", "³": "^3", "⁴": "^4",
+        "⁵": "^5", "⁶": "^6", "⁷": "^7", "⁸": "^8", "⁹": "^9",
+        "⁺": "^+", "⁻": "^-", "⁼": "^=", "⁽": "^(", "⁾": "^)",
+        "ⁿ": "^n", "ⁱ": "^i", "ˣ": "^x",
+
+        # Subscripts
+        "₀": "_0", "₁": "_1", "₂": "_2", "₃": "_3", "₄": "_4",
+        "₅": "_5", "₆": "_6", "₇": "_7", "₈": "_8", "₉": "_9",
+        "₊": "_+", "₋": "_-", "₌": "_=", "₍": "_(", "₎": "_)",
+        "ₐ": "_a", "ₑ": "_e", "ₒ": "_o", "ₓ": "_x", "ₕ": "_h",
+        "ₖ": "_k", "ₗ": "_l", "ₘ": "_m", "ₙ": "_n", "ₚ": "_p",
+        "ₛ": "_s", "ₜ": "_t",
+
         # Mathematical operators
-        "∀": "\\forall", "∃": "\\exists", "∈": "\\in", "∉": "\\notin",
+        "∀": "\\forall", "∃": "\\exists", "∄": "\\nexists",
+        "∈": "\\in", "∉": "\\notin", "∋": "\\ni", "∌": "\\notni",
         "⊂": "\\subset", "⊃": "\\supset", "⊆": "\\subseteq", "⊇": "\\supseteq",
-        "∪": "\\cup", "∩": "\\cap", "∅": "\\emptyset",
+        "⊄": "\\nsubseteq", "⊅": "\\nsupseteq",
+        "∪": "\\cup", "∩": "\\cap", "∅": "\\emptyset", "⊎": "\\uplus",
+        "⊓": "\\sqcap", "⊔": "\\sqcup",
 
         # Relations
         "≤": "\\leq", "≥": "\\geq", "≠": "\\neq", "≈": "\\approx",
-        "≡": "\\equiv", "∼": "\\sim", "≅": "\\cong",
+        "≡": "\\equiv", "∼": "\\sim", "≅": "\\cong", "≃": "\\simeq",
+        "≺": "\\prec", "≻": "\\succ", "≼": "\\preceq", "≽": "\\succeq",
+        "∣": "\\mid", "∤": "\\nmid", "⊢": "\\vdash", "⊨": "\\models",
 
         # Calculus
-        "∫": "\\int", "∑": "\\sum", "∏": "\\prod", "∂": "\\partial",
-        "∇": "\\nabla", "∞": "\\infty",
+        "∫": "\\int", "∬": "\\iint", "∭": "\\iiint", "∮": "\\oint",
+        "∑": "\\sum", "∏": "\\prod", "∐": "\\coprod",
+        "∂": "\\partial", "∇": "\\nabla", "∆": "\\Delta", "∞": "\\infty",
+        "√": "\\sqrt", "∛": "\\cbrt", "∜": "\\fourthroot",
 
         # Logic
-        "∧": "\\land", "∨": "\\lor", "¬": "\\neg", "⇒": "\\Rightarrow",
-        "⇔": "\\Leftrightarrow", "→": "\\to", "↦": "\\mapsto",
+        "∧": "\\land", "∨": "\\lor", "¬": "\\neg", "⊤": "\\top", "⊥": "\\bot",
+        "⇒": "\\Rightarrow", "⇐": "\\Leftarrow", "⇔": "\\Leftrightarrow",
+        "→": "\\to", "←": "\\from", "↔": "\\leftrightarrow",
+        "↦": "\\mapsto", "⟼": "\\longmapsto",
+        "⊨": "\\models", "⊢": "\\vdash", "⊣": "\\dashv",
 
         # Arrows
-        "←": "\\leftarrow", "↔": "\\leftrightarrow",
+        "↑": "\\uparrow", "↓": "\\downarrow", "⇑": "\\Uparrow", "⇓": "\\Downarrow",
+        "↗": "\\nearrow", "↘": "\\searrow", "↙": "\\swarrow", "↖": "\\nwarrow",
+        "⇀": "\\rightharpoonup", "⇁": "\\rightharpoondown",
+        "↼": "\\leftharpoonup", "↽": "\\leftharpoondown",
 
-        # Other
-        "∝": "\\propto", "⊥": "\\perp", "∥": "\\parallel",
-        "⊕": "\\oplus", "⊗": "\\otimes",
+        # Set theory & misc
+        "⊔": "\\sqcup", "⊓": "\\sqcap", "⊏": "\\sqsubset", "⊐": "\\sqsupset",
+        "⊑": "\\sqsubseteq", "⊒": "\\sqsupseteq",
+        "∝": "\\propto", "∥": "\\parallel", "⟂": "\\perp",
+        "⊕": "\\oplus", "⊗": "\\otimes", "⊙": "\\odot", "⊖": "\\ominus",
+        "⊘": "\\oslash", "⊞": "\\boxplus", "⊟": "\\boxminus",
+        "⊠": "\\boxtimes", "⊡": "\\boxdot",
+
+        # Dots and ellipsis
+        "⋯": "\\cdots", "⋮": "\\vdots", "⋱": "\\ddots", "…": "\\ldots",
+        "·": "\\cdot", "•": "\\bullet", "∘": "\\circ", "∙": "\\bullet",
+
+        # Brackets and delimiters
+        "⟨": "\\langle", "⟩": "\\rangle", "⟦": "\\llbracket", "⟧": "\\rrbracket",
+        "⌈": "\\lceil", "⌉": "\\rceil", "⌊": "\\lfloor", "⌋": "\\rfloor",
+        "｜": "\\vert", "∥": "\\Vert",
+
+        # Geometry
+        "∠": "\\angle", "∡": "\\measuredangle", "∢": "\\sphericalangle",
+        "△": "\\triangle", "▵": "\\triangle", "□": "\\square",
+        "◊": "\\diamond", "○": "\\circle", "●": "\\bullet",
+        "°": "\\degree", "′": "\\prime", "″": "\\dprime",
+
+        # Algebraic structures
+        "⊗": "\\otimes", "⊕": "\\oplus", "⊞": "\\boxplus",
+        "⋊": "\\rtimes", "⋉": "\\ltimes", "⋈": "\\bowtie",
     }
 
     # Special tokens
