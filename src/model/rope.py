@@ -8,7 +8,7 @@ import torch.nn as nn
 from typing import Optional, Tuple
 
 
-class RotaryPositionEmbedding(nn.Module):
+class RotaryPositionalEmbedding(nn.Module):
     """
     Rotary Position Embedding (RoPE) with dynamic scaling support.
 
@@ -59,7 +59,7 @@ class RotaryPositionEmbedding(nn.Module):
                 t = t / self.scaling_factor
             
             # Compute frequencies
-            freqs = torch.outers(t, self.inv_freq)
+            freqs = torch.outer(t, self.inv_freq)
 
             # Create rotation matrix components
             emb = torch.cat([freqs, freqs], dim=-1)
@@ -112,7 +112,7 @@ class RotaryPositionEmbedding(nn.Module):
         self._seq_len_cached = 0
 
 
-class DynamicRoPE(RotaryPositionEmbedding):
+class DynamicRoPE(RotaryPositionalEmbedding):
     """
     Dynammic RoPE with automatic scaling factor adjustment.
 
@@ -120,7 +120,7 @@ class DynamicRoPE(RotaryPositionEmbedding):
     enable better extrapolation to longer sequences.
     """
 
-    def __init__(self, dim: int, max_position_embeddings: int = 8192, base: float = 10000.0, max_scaling_factor: float = 4.0, device: Optional[torch.devices] = None):
+    def __init__(self, dim: int, max_position_embeddings: int = 8192, base: float = 10000.0, max_scaling_factor: float = 4.0, device: Optional[torch.device] = None):
         super().__init__(dim, max_position_embeddings, base, 1.0, device)
         self.max_scaling_factor = max_scaling_factor
 

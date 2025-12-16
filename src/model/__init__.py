@@ -1,10 +1,10 @@
 """Model module for mathematical reasoning transformer."""
 
 from .decoder import MathTransformerDecoder
-from .rope import RotaryPositionEmbedding, DynamicRoPE
+from .rope import RotaryPositionalEmbedding, DynamicRoPE
 
 __all__ = [
     "MathTransformerDecoder",
-    "RotaryPositionEmbedding",
+    "RotaryPositionalEmbedding",
     "DynamicRoPE",
 ]
