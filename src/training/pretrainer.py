@@ -266,7 +266,7 @@ class PreTrainer:
                 attention_mask=batch["attention_mask"],
             )
 
-            logits = outputs  # Model returns logits directly
+            logits = outputs["logits"]  # Model returns logits directly
 
             # Compute loss
             loss = nn.functional.cross_entropy(
