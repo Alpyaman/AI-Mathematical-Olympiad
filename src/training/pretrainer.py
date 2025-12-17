@@ -155,7 +155,7 @@ class PreTrainer:
             optimizer_groups,
             lr=self.config.learning_rate,
             betas=(self.config.beta1, self.config.beta2),
-            eps=self.config.epsilon,
+            eps=self.config.eps,
         )
 
         return optimizer
