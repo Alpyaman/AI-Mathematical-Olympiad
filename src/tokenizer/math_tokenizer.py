@@ -187,6 +187,10 @@ class MathTokenizer:
         # Regex patterns for tokenization
         self._compile_patterns()
 
+    def __len__(self):
+        """Returns the size of the vocabulary."""
+        return len(self.token_to_id)
+
     def _build_vocab(self):
         """Build the initial vocabulary with special tokens and math symbols."""
         idx = 0
