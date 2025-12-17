@@ -191,6 +191,11 @@ class MathTokenizer:
         """Returns the size of the vocabulary."""
         return len(self.token_to_id)
 
+    @property
+    def special_tokens(self) -> Dict[str, str]:
+        """Returns the dictionary of special tokens."""
+        return self.SPECIAL_TOKENS
+
     def _build_vocab(self):
         """Build the initial vocabulary with special tokens and math symbols."""
         idx = 0
