@@ -116,6 +116,30 @@ class MathTokenizer:
         # Algebraic structures
         "⊗": "\\otimes", "⊕": "\\oplus", "⊞": "\\boxplus",
         "⋊": "\\rtimes", "⋉": "\\ltimes", "⋈": "\\bowtie",
+
+        "\\frac": "\\frac",
+        "\\boxed": "\\boxed",
+        "\\text": "\\text",
+        "\\cdot": "\\cdot",
+        "\\ldots": "\\ldots",
+        "\\sqrt": "\\sqrt",
+        "\\sin": "\\sin",
+        "\\cos": "\\cos",
+        "\\tan": "\\tan",
+        "\\log": "\\log",
+        "\\ln": "\\ln",
+        "\\lim": "\\lim",
+        "^": "^",
+        "_": "_",
+        "{": "{",
+        "}": "}",
+        "(": "(",
+        ")": ")",
+        "[": "[",
+        "]": "]",
+        "+": "+",
+        "-": "-",
+        "=": "=",
     }
 
     # Special tokens
@@ -135,6 +159,9 @@ class MathTokenizer:
         "solution_start": "<solution>",
         "solution_end": "</solution>",
         "step": "<step>",
+        "step_end": "</step>",
+        "answer_start": "<answer>",
+        "answer_end": "</answer>",
     }
 
     def __init__(
@@ -209,17 +236,24 @@ class MathTokenizer:
 
     def _compile_patterns(self):
         """Compile regex patterns for tokenization."""
-        # Pattern to match LaTeX commands
+        # 1. Pattern to match Special Tokens (CRITICAL FIX)
+        # We sort by length (descending) so <solution> is matched before <
+        special_tokens_pattern = '|'.join(re.escape(s) for s in sorted(self.SPECIAL_TOKENS.values(), key=len, reverse=True))
+        self.special_token_pattern = re.compile(f'({special_tokens_pattern})')
+
+        # 2. Pattern to match LaTeX commands
         self.latex_pattern = re.compile(r'\\[a-zA-Z]+')
 
-        # Pattern to match mathematical symbols
-        math_symbols_pattern = '|'.join(re.escape(s) for s in self.MATH_SYMBOLS.keys())
+        # 3. Pattern to match mathematical symbols
+        # Sort by length to ensure \geq matches before \ge if both exist
+        sorted_symbols = sorted(self.MATH_SYMBOLS.keys(), key=len, reverse=True)
+        math_symbols_pattern = '|'.join(re.escape(s) for s in sorted_symbols)
         self.math_symbol_pattern = re.compile(f'({math_symbols_pattern})')
 
-        # Pattern to match numbers (including decimals and scientific notation)
+        # 4. Pattern to match numbers (including decimals and scientific notation)
         self.number_pattern = re.compile(r'\d+\.?\d*(?:[eE][+-]?\d+)?')
 
-        # Pattern to match words
+        # 5. Pattern to match words
         self.word_pattern = re.compile(r'\b\w+\b')
 
     def _tokenize_text(self, text: str) -> List[str]:
@@ -238,9 +272,15 @@ class MathTokenizer:
         while pos < len(text):
             # Skip whitespace
             if text[pos].isspace():
-                if text[pos] == ' ':
-                    tokens.append(' ')
+                tokens.append(' ')
                 pos += 1
+                continue
+
+            # Try match special tokens first
+            special_match = self.special_token_pattern.match(text, pos)
+            if special_match:
+                tokens.append(special_match.group())
+                pos = special_match.end()
                 continue
 
             # Try to match LaTeX command

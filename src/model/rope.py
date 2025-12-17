@@ -88,16 +88,28 @@ class RotaryPositionalEmbedding(nn.Module):
         """
         batch_size, num_heads, seq_len, head_dim = q.shape
 
-        # Get cos and sin values
-        cos, sin = self._compute_cos_sin(seq_len, q.device, q.dtype)
+        # Determine the cache length needed
+        if position_ids is not None:
+            # If explicit positions are passed, we need the cache to cover the highest index
+            max_pos = position_ids.max().item() + 1
+            cache_len = max(seq_len, int(max_pos))
+        else:
+            cache_len = seq_len
+
+        # Get cos and sin values (ensure cache is large enough)
+        cos, sin = self._compute_cos_sin(cache_len, q.device, q.dtype)
 
         # Handle custom position_ids if provided
         if position_ids is not None:
+            # Select specific positions from the cache
             cos = cos[position_ids].unsqueeze(1)  # (batch_size, 1, seq_len, head_dim)
             sin = sin[position_ids].unsqueeze(1)  # (batch_size, 1, seq_len, head_dim)
         else:
-            cos = cos[None, None, :, :] # (1, 1, seq_len, dim)
-            sin = sin[None, None, :, :]
+            # Standard sequential positions (0 to seq_len)
+            # We take the slice corresponding to the current sequence length
+            cos = cos[:seq_len].unsqueeze(0).unsqueeze(0) # (1, 1, seq_len, dim)
+            sin = sin[:seq_len].unsqueeze(0).unsqueeze(0)
+        # --- FIX END ---
 
         # Apply rotation
         q_embed = (q * cos) + (self._rotate_half(q) * sin)

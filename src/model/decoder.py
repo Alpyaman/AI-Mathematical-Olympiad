@@ -414,7 +414,12 @@ class MathTransformerDecoder(nn.Module):
 
         # Create position ids if not provided
         if position_ids is None:
-            position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+            past_length = 0
+            # If we have a cache, the current position starts after the cached sequence
+            if past_key_values is not None and past_key_values[0] is not None:
+                past_length = past_key_values[0].seq_len
+            
+            position_ids = torch.arange(past_length, past_length + seq_len, device=input_ids.device).unsqueeze(0)
 
         # Prepare attention mask
         attention_mask = self._prepare_decoder_attention_mask(
@@ -472,20 +477,10 @@ class MathTransformerDecoder(nn.Module):
         top_k: Optional[int] = None,
         top_p: Optional[float] = None,
         do_sample: bool = True,
+        eos_token_id: Optional[int] = None,  # <--- NEW ARGUMENT
     ) -> torch.Tensor:
         """
         Generate tokens autoregressively.
-
-        Args:
-            input_ids: Initial token ids (batch_size, seq_len)
-            max_new_tokens: Maximum number of tokens to generate
-            temperature: Sampling temperature
-            top_k: Top-k sampling parameter
-            top_p: Top-p (nucleus) sampling parameter
-            do_sample: Whether to sample or use greedy decoding
-
-        Returns:
-            Generated token ids (batch_size, seq_len + max_new_tokens)
         """
         self.eval()
         past_key_values = None
@@ -503,7 +498,10 @@ class MathTransformerDecoder(nn.Module):
                 past_key_values = outputs["past_key_values"]
 
                 # Apply temperature
-                logits = logits / temperature
+                if temperature > 0:
+                    logits = logits / temperature
+                else:
+                    do_sample = False # Greedy if temp is 0
 
                 # Apply top-k filtering
                 if top_k is not None:
@@ -532,8 +530,11 @@ class MathTransformerDecoder(nn.Module):
                 # Append to sequence
                 input_ids = torch.cat([input_ids, next_token], dim=-1)
 
-                # Check for EOS token (assuming 0 is EOS)
-                if next_token.item() == 0:
+                # Check for EOS token
+                if eos_token_id is not None and next_token.item() == eos_token_id:
+                    break
+                # Fallback: Stop if we hit 0 (pad) only if EOS wasn't specified
+                elif eos_token_id is None and next_token.item() == 0:
                     break
 
         return input_ids
