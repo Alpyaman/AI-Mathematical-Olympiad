@@ -29,6 +29,13 @@ from .preprocessing import (
     validate_problem,
     compute_problem_score,
 )
+from .pretraining_dataset import (
+    TextStreamDataset,
+    MixedDomainDataset,
+    PreTrainingDataCollator,
+    prepare_pretraining_data,
+    create_sample_pretraining_data,
+)
 
 __all__ = [
     # Schema
@@ -58,4 +65,10 @@ __all__ = [
     "DataPreprocessor",
     "validate_problem",
     "compute_problem_score",
+    # Pre-training (Phase 2.1)
+    "TextStreamDataset",
+    "MixedDomainDataset",
+    "PreTrainingDataCollator",
+    "prepare_pretraining_data",
+    "create_sample_pretraining_data",
 ]
