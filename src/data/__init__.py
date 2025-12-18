@@ -37,6 +37,13 @@ from .pretraining_dataset import (
     create_sample_pretraining_data,
 )
 
+# Import robust utilities (only available with torch)
+try:
+    from ..training.robust_utils import RobustDataCollator
+    ROBUST_COLLATOR_AVAILABLE = True
+except ImportError:
+    ROBUST_COLLATOR_AVAILABLE = False
+
 __all__ = [
     # Schema
     "MathProblem",
@@ -73,12 +80,30 @@ __all__ = [
     "create_sample_pretraining_data",
 ]
 
-# Import robust utilities (only available with torch)
-try:
-    from ..training.robust_utils import RobustDataCollator
-    ROBUST_DATA_COLLATOR_AVAILABLE = True
-except ImportError:
-    ROBUST_DATA_COLLATOR_AVAILABLE = False
-
-if ROBUST_DATA_COLLATOR_AVAILABLE:
+# Add robust collator if available
+if ROBUST_COLLATOR_AVAILABLE:
     __all__.append("RobustDataCollator")
+
+# Export fine-tuning components (Phase 2.2)
+try:
+    from .aimo_dataset import (
+        AIMOProblem,
+        AIMODatasetLoader,
+        AIMOFormatter,
+        load_aimo_dataset,
+    )
+    from .finetuning_dataset import (
+        AIMOFineTuningDataset,
+        split_aimo_dataset,
+    )
+
+    __all__.extend([
+        "AIMOProblem",
+        "AIMODatasetLoader",
+        "AIMOFormatter",
+        "load_aimo_dataset",
+        "AIMOFineTuningDataset",
+        "split_aimo_dataset",
+    ])
+except ImportError:
+    pass  # Fine-tuning modules not available

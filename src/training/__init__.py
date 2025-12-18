@@ -5,8 +5,10 @@ This module provides the training infrastructure for Phase 2: Base Pre-training 
 """
 
 from .pretrainer import PreTrainer
+from .finetuner import FineTuner
 from .distributed import setup_distributed, cleanup_distributed, is_distributed
 from .config import PreTrainingConfig
+from .finetuning_config import FineTuningConfig
 from .robust_utils import (
         RobustDataCollator,
         fixed_train_step,
@@ -28,4 +30,6 @@ __all__ = [
     "validate_batch",
     "safe_loss_computation",
     "diagnose_batch_issue",
+    "FineTuner",
+    "FineTuningConfig",
 ]
