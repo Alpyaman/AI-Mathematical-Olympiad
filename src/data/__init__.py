@@ -72,3 +72,13 @@ __all__ = [
     "prepare_pretraining_data",
     "create_sample_pretraining_data",
 ]
+
+# Import robust utilities (only available with torch)
+try:
+    from ..training.robust_utils import RobustDataCollator
+    ROBUST_DATA_COLLATOR_AVAILABLE = True
+except ImportError:
+    ROBUST_DATA_COLLATOR_AVAILABLE = False
+
+if ROBUST_DATA_COLLATOR_AVAILABLE:
+    __all__.append("RobustDataCollator")

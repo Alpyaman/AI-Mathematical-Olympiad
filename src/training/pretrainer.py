@@ -17,7 +17,8 @@ try:
     import torch.nn as nn
     from torch.optim import AdamW
     from torch.optim.lr_scheduler import LambdaLR
-    from torch.cuda.amp import autocast, GradScaler
+    from torch.cuda.amp import GradScaler
+    from torch.amp import autocast
     from torch.nn.parallel import DistributedDataParallel as DDP
 
     from .distributed import (
@@ -28,6 +29,12 @@ try:
         barrier,
         reduce_dict,
         save_on_main_process,
+    )
+
+    from .robust_utils import (
+        validate_batch,
+        safe_loss_computation,
+        diagnose_batch_issue,
     )
 
     TORCH_AVAILABLE = True
@@ -248,7 +255,7 @@ class PreTrainer:
 
     def train_step(self, batch: Dict[str, torch.Tensor]) -> float:
         """
-        Perform a single training step.
+        Perform a single training step with robust error handling.
 
         Args:
             batch: Batch of data
@@ -256,24 +263,38 @@ class PreTrainer:
         Returns:
             Loss value
         """
+        if not validate_batch(batch):
+            print("Invalid batch detected. Diagnostics:")
+            print(diagnose_batch_issue(batch))
+            raise ValueError("Invalid batch encountered during training step.")
+
         # Move batch to device
         batch = {k: v.to(self.device) for k, v in batch.items()}
 
         # Forward pass with mixed precision
-        with autocast(dtype=self.dtype, enabled=self.use_amp):
+        with autocast("cuda", dtype=self.dtype, enabled=self.use_amp):
             outputs = self.model(
                 input_ids=batch["input_ids"],
                 attention_mask=batch["attention_mask"],
             )
 
-            logits = outputs["logits"]  # Model returns logits directly
+            # Handle different model output formats
+            if isinstance(outputs, tuple):
+                logits = outputs[0]  # Assume first element is logits
+            elif isinstance(outputs, dict):
+                logits = outputs["logits"]  # Model returns logits directly
+            else:
+                logits = outputs  # Assume outputs are logits
 
-            # Compute loss
-            loss = nn.functional.cross_entropy(
-                logits.reshape(-1, logits.size(-1)),
-                batch["labels"].reshape(-1),
-                ignore_index=-100,
-            )
+            # Compute loss with safe handling
+            try:
+                loss = safe_loss_computation(logits, batch["labels"])
+            except Exception as e:
+                print("Loss computation failed.")
+                print(f"Logits shape: {logits.shape}")
+                print(f"Labels shape: {batch['labels'].shape}")
+                print(diagnose_batch_issue(batch))
+                raise e
 
             # Scale loss for gradient accumulation
             loss = loss / self.config.gradient_accumulation_steps
@@ -425,7 +446,7 @@ class PreTrainer:
 
             batch = {k: v.to(self.device) for k, v in batch.items()}
 
-            with autocast(dtype=self.dtype, enabled=self.use_amp):
+            with autocast("cuda", dtype=self.dtype, enabled=self.use_amp):
                 outputs = self.model(
                     input_ids=batch["input_ids"],
                     attention_mask=batch["attention_mask"],

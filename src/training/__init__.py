@@ -4,14 +4,28 @@ Training Infrastructure for Mathematical Reasoning Model
 This module provides the training infrastructure for Phase 2: Base Pre-training and beyond, including distributed training, mixed precision, and monitoring.
 """
 
-from .pretrainer import Pretrainer
+from .pretrainer import PreTrainer
 from .distributed import setup_distributed, cleanup_distributed, is_distributed
 from .config import PreTrainingConfig
+from .robust_utils import (
+        RobustDataCollator,
+        fixed_train_step,
+        validate_batch,
+        safe_loss_computation,
+        diagnose_batch_issue,
+    )
+
+ 
 
 __all__ = [
-    "Pretrainer",
+    "PreTrainer",
+    "PreTrainingConfig",
     "setup_distributed",
     "cleanup_distributed",
     "is_distributed",
-    "PreTrainingConfig",
+    "RobustDataCollator",
+    "fixed_train_step",
+    "validate_batch",
+    "safe_loss_computation",
+    "diagnose_batch_issue",
 ]
