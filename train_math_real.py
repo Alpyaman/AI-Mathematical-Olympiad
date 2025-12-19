@@ -61,7 +61,7 @@ def train():
 
     # 2. Prepare Data
     print("📚 Loading HuggingFaceH4/MATH-500...")
-    dataset_hf = load_dataset("HuggingFaceH4/MATH-500", split="test") # It's a test set we use for training practice
+    dataset_hf = load_dataset(" ", split="test") # It's a test set we use for training practice
     problems = convert_hf_to_schema(dataset_hf)
     
     # Split

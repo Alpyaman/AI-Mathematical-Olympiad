@@ -14,6 +14,8 @@ from .metrics import (
     evaluate_predictions,
     MathEvaluator,
 )
+from .comprehensive_evaluator import ComprehensiveEvaluator
+from .kaggle_submission import KaggleSubmissionGenerator
 
 __all__ = [
     # Answer extraction
@@ -26,4 +28,8 @@ __all__ = [
     "compute_exact_match",
     "evaluate_predictions",
     "MathEvaluator",
+    # Comprehensive evaluation
+    "ComprehensiveEvaluator",
+    # Kaggle submission
+    "KaggleSubmissionGenerator",
 ]
