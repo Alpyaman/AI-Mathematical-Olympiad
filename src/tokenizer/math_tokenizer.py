@@ -58,6 +58,7 @@ class MathTokenizer:
         "ₛ": "_s", "ₜ": "_t",
 
         # Mathematical operators
+        "×": "\\times",
         "∀": "\\forall", "∃": "\\exists", "∄": "\\nexists",
         "∈": "\\in", "∉": "\\notin", "∋": "\\ni", "∌": "\\notni",
         "⊂": "\\subset", "⊃": "\\supset", "⊆": "\\subseteq", "⊇": "\\supseteq",
@@ -81,8 +82,7 @@ class MathTokenizer:
         "∧": "\\land", "∨": "\\lor", "¬": "\\neg", "⊤": "\\top", "⊥": "\\bot",
         "⇒": "\\Rightarrow", "⇐": "\\Leftarrow", "⇔": "\\Leftrightarrow",
         "→": "\\to", "←": "\\from", "↔": "\\leftrightarrow",
-        "↦": "\\mapsto", "⟼": "\\longmapsto",
-        "⊨": "\\models", "⊢": "\\vdash", "⊣": "\\dashv",
+        "↦": "\\mapsto", "⟼": "\\longmapsto", "⊣": "\\dashv",
 
         # Arrows
         "↑": "\\uparrow", "↓": "\\downarrow", "⇑": "\\Uparrow", "⇓": "\\Downarrow",
@@ -91,7 +91,7 @@ class MathTokenizer:
         "↼": "\\leftharpoonup", "↽": "\\leftharpoondown",
 
         # Set theory & misc
-        "⊔": "\\sqcup", "⊓": "\\sqcap", "⊏": "\\sqsubset", "⊐": "\\sqsupset",
+        "⊏": "\\sqsubset", "⊐": "\\sqsupset",
         "⊑": "\\sqsubseteq", "⊒": "\\sqsupseteq",
         "∝": "\\propto", "∥": "\\parallel", "⟂": "\\perp",
         "⊕": "\\oplus", "⊗": "\\otimes", "⊙": "\\odot", "⊖": "\\ominus",
@@ -104,8 +104,7 @@ class MathTokenizer:
 
         # Brackets and delimiters
         "⟨": "\\langle", "⟩": "\\rangle", "⟦": "\\llbracket", "⟧": "\\rrbracket",
-        "⌈": "\\lceil", "⌉": "\\rceil", "⌊": "\\lfloor", "⌋": "\\rfloor",
-        "｜": "\\vert", "∥": "\\Vert",
+        "⌈": "\\lceil", "⌉": "\\rceil", "⌊": "\\lfloor", "⌋": "\\rfloor", "｜": "\\vert",
 
         # Geometry
         "∠": "\\angle", "∡": "\\measuredangle", "∢": "\\sphericalangle",
@@ -114,7 +113,6 @@ class MathTokenizer:
         "°": "\\degree", "′": "\\prime", "″": "\\dprime",
 
         # Algebraic structures
-        "⊗": "\\otimes", "⊕": "\\oplus", "⊞": "\\boxplus",
         "⋊": "\\rtimes", "⋉": "\\ltimes", "⋈": "\\bowtie",
 
         "\\frac": "\\frac",

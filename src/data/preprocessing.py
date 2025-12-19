@@ -194,6 +194,7 @@ class TextNormalizer:
         text = text.replace('...', '…')
 
         # Normalize mathematical notation (optional)
+        text = text.replace('×', '*')
         if not self.preserve_latex:
             # Convert LaTeX to Unicode (basic conversions)
             replacements = {
@@ -206,6 +207,11 @@ class TextNormalizer:
                 r'\\cap': '∩',
                 r'\\forall': '∀',
                 r'\\exists': '∃',
+                r'\\multiply': '*',
+                r'\\times': '*',
+                r'\\div': '÷',
+                r'\\pm': '±',
+                r'\\sqrt': '√',
             }
             for latex, unicode in replacements.items():
                 text = text.replace(latex, unicode)
