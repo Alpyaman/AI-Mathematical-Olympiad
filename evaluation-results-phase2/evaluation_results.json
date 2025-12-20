@@ -1,0 +1,88 @@
+{
+  "overall": {
+    "total": 3,
+    "answer_extraction_rate": 1.0,
+    "answer_found": 3,
+    "answer_not_found": 0
+  },
+  "by_difficulty": {
+    "unknown": {
+      "total": 3
+    }
+  },
+  "by_topic": {},
+  "error_analysis": {
+    "total_errors": 3,
+    "error_type_counts": {
+      "wrong_answer": 3
+    },
+    "error_samples": [
+      {
+        "problem_id": "000aaa",
+        "error_type": "wrong_answer",
+        "extracted": "1",
+        "ground_truth": null,
+        "difficulty": "unknown"
+      },
+      {
+        "problem_id": "111bbb",
+        "error_type": "wrong_answer",
+        "extracted": "0",
+        "ground_truth": null,
+        "difficulty": "unknown"
+      },
+      {
+        "problem_id": "222ccc",
+        "error_type": "wrong_answer",
+        "extracted": "4",
+        "ground_truth": null,
+        "difficulty": "unknown"
+      }
+    ]
+  },
+  "detailed_results": [
+    {
+      "problem_id": "000aaa",
+      "problem": "What is $1-1$?",
+      "generated": "A point on the line $x = 1,$ which is one of the following expression: $$1-1 = -1.$$ Step 1: Solution Since $1-1=-1$, we have $$1-1 = -1.$$ Solving for $x$, we find $1 - x = -1.$ Then $1 - x = 1 - x,$ so $x = \\boxed{1}.$ 1",
+      "extracted_answer": "1",
+      "ground_truth": null,
+      "is_correct": null,
+      "difficulty": "unknown",
+      "topics": [],
+      "problem_type": "unknown"
+    },
+    {
+      "problem_id": "111bbb",
+      "problem": "What is $0\\times10$?",
+      "generated": "$100 = 0 + 0.001 + 0.001 + 0.0001$ Step 1: Solution We have begin{align*} 0\\times 1001 + 0.001 + 0.001 &= 0\\times 0001 + 0.001 + 0.0001 + 0.0001 + 0.0001 + 0.0001 &= \\boxed{0}.end{align*} 0",
+      "extracted_answer": "0",
+      "ground_truth": null,
+      "is_correct": null,
+      "difficulty": "unknown",
+      "topics": [],
+      "problem_type": "unknown"
+    },
+    {
+      "problem_id": "222ccc",
+      "problem": "Solve $4+x=4$ for $x$.",
+      "generated": "Step 1: Solution First we begin by solving for $x$ for $x$ gives $4+x=4$. Subtracting $4$ from both sides gives $x=\\boxed{4}$. 4",
+      "extracted_answer": "4",
+      "ground_truth": null,
+      "is_correct": null,
+      "difficulty": "unknown",
+      "topics": [],
+      "problem_type": "unknown"
+    }
+  ],
+  "metadata": {
+    "total_problems": 3,
+    "model_config": {
+      "max_length": 256,
+      "temperature": 0.0,
+      "top_p": 0.9,
+      "device": "cpu"
+    },
+    "timestamp": "2025-12-20T20:50:47.818745"
+  }
+}

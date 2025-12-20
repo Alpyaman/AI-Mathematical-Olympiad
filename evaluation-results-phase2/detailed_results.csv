@@ -1,0 +1,4 @@
+problem_id,problem,generated,extracted_answer,ground_truth,is_correct,difficulty,topics,problem_type
+000aaa,What is $1-1$?,"A point on the line $x = 1,$ which is one of the following expression: $$1-1 = -1.$$ Step 1: Solution Since $1-1=-1$, we have $$1-1 = -1.$$ Solving for $x$, we find $1 - x = -1.$ Then $1 - x = 1 - x,$ so $x = \boxed{1}.$ 1",1,,,unknown,[],unknown
+111bbb,What is $0\times10$?,$100 = 0 + 0.001 + 0.001 + 0.0001$ Step 1: Solution We have begin{align*} 0\times 1001 + 0.001 + 0.001 &= 0\times 0001 + 0.001 + 0.0001 + 0.0001 + 0.0001 + 0.0001 &= \boxed{0}.end{align*} 0,0,,,unknown,[],unknown
+222ccc,Solve $4+x=4$ for $x$.,Step 1: Solution First we begin by solving for $x$ for $x$ gives $4+x=4$. Subtracting $4$ from both sides gives $x=\boxed{4}$. 4,4,,,unknown,[],unknown

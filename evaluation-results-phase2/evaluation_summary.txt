@@ -1,0 +1,34 @@
+================================================================================
+MATHEMATICAL REASONING MODEL - EVALUATION REPORT
+================================================================================
+
+OVERALL PERFORMANCE
+----------------------------------------
+Total Problems:        3
+Answer Extraction Rate: 100.00%
+Answers Found:         3
+Answers Not Found:     0
+
+PERFORMANCE BY DIFFICULTY
+----------------------------------------
+unknown:
+  Total: 3
+
+PERFORMANCE BY TOPIC
+----------------------------------------
+
+ERROR ANALYSIS
+----------------------------------------
+Total Errors:          3
+Error Types:
+  wrong_answer: 3
+
+METADATA
+----------------------------------------
+Timestamp: 2025-12-20T20:50:47.818745
+Device: cpu
+Max Length: 256
+Temperature: 0.0
+Top-p: 0.9
+
+================================================================================
