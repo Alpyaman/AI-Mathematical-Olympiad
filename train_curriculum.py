@@ -19,24 +19,25 @@ from src.model.decoder import MathTransformerDecoder
 from src.tokenizer.math_tokenizer import MathTokenizer
 from src.data.dataset import MathReasoningDataset, create_dataloaders, split_dataset
 from src.data.data_schema import MathProblem, MathSolution, ReasoningStep, DifficultyLevel, ProblemType
+from src.data.data_formatter import ChainOfThoughtFormatter
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
 CONFIG = {
-    # Model - Same tiny model
-    "hidden_size": 256,
-    "num_layers": 6,
-    "num_heads": 8,
-    "intermediate_size": 1024,
-    "max_length": 256,  # Shorter for simple problems
+    # Model - Medium model (~350M params) for better capacity
+    "hidden_size": 768,        # GPT-2 medium size
+    "num_layers": 12,          # Deeper network
+    "num_heads": 12,           # More attention heads
+    "intermediate_size": 3072, # 4x hidden size
+    "max_length": 512,         # Longer sequences for complex reasoning
     
     # Training
-    "batch_size": 8,
-    "grad_accum": 4,
-    "learning_rate": 5e-4,
-    "epochs_per_stage": 10,  # Train each stage for 10 epochs
+    "batch_size": 2,           # Small batch for large model
+    "grad_accum": 16,          # High accumulation to maintain effective batch of 32
+    "learning_rate": 2e-4,     # Lower LR for large model stability
+    "epochs_per_stage": 20,    # More epochs for thorough learning
     
     # Curriculum stages
     "problems_per_stage": 2000,
@@ -166,8 +167,9 @@ def evaluate_quick(model, tokenizer, problems, device, num_samples=50):
     with torch.no_grad():
         for prob in sample_problems:
             try:
+                # Use simple format matching training
                 prompt = f"Problem: {prob.problem_statement}\n\nSolution:"
-                encoded = tokenizer.encode(prompt, max_length=256, truncation=True)
+                encoded = tokenizer.encode(prompt, add_special_tokens=False, max_length=256, truncation=True)
                 input_ids = torch.tensor([encoded['input_ids']]).to(device)
                 
                 outputs = model.generate(
@@ -210,9 +212,25 @@ def train_stage(stage_name, problems, model, tokenizer, optimizer, scheduler, de
     train_probs, val_probs, _ = split_dataset(problems, 0.8, 0.15, 0.05)
     print(f"Train: {len(train_probs)}, Val: {len(val_probs)}")
     
-    # Create datasets
-    train_ds = MathReasoningDataset(train_probs, tokenizer, max_length=config["max_length"])
-    val_ds = MathReasoningDataset(val_probs, tokenizer, max_length=config["max_length"])
+    # Create formatter WITHOUT special tokens - just simple Q&A format
+    simple_formatter = ChainOfThoughtFormatter(
+        use_special_tokens=False,  # No <step>, <answer> etc
+        include_step_numbers=False,
+        include_justifications=False,
+        add_verification=False,
+    )
+    
+    # Create datasets with simple formatter
+    train_ds = MathReasoningDataset(
+        train_probs, tokenizer, 
+        formatter=simple_formatter,  # Use simple formatter
+        max_length=config["max_length"]
+    )
+    val_ds = MathReasoningDataset(
+        val_probs, tokenizer,
+        formatter=simple_formatter,  # Use simple formatter
+        max_length=config["max_length"]
+    )
     
     train_loader, val_loader = create_dataloaders(
         train_ds, val_ds,
@@ -322,6 +340,20 @@ def main():
     print(f"Stage 1 (Arithmetic): {len(stage1_problems)} problems")
     print(f"Stage 2 (Multi-step): {len(stage2_problems)} problems")
     print(f"Stage 3 (Algebra):    {len(stage3_problems)} problems")
+    
+    # Show example of how data will be formatted
+    print("\n📝 Example training format (simple, no special tokens):")
+    print(f"{'='*70}")
+    from src.data.data_formatter import ChainOfThoughtFormatter
+    simple_formatter = ChainOfThoughtFormatter(
+        use_special_tokens=False,
+        include_step_numbers=False,
+        include_justifications=False,
+        add_verification=False,
+    )
+    sample_text = simple_formatter.format_problem(stage1_problems[0], include_solution=True)
+    print(sample_text[:300])
+    print(f"{'='*70}\n")
     
     # Train each stage
     stages = [
