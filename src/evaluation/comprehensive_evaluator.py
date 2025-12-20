@@ -72,36 +72,37 @@ class ComprehensiveEvaluator:
         Returns:
             Generated solution text
         """
-        # Format input
-        prompt = f"Problem: {problem}\n\nSolution:"
-        
-        # Tokenize
-        inputs = self.tokenizer(
-            prompt,
-            return_tensors="pt",
-            truncation=True,
-            max_length=self.max_length,
-        ).to(self.device)
-        
-        # Generate
-        with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs,
-                max_new_tokens=self.max_length,
-                temperature=self.temperature,
-                top_p=self.top_p,
-                do_sample=True,
-                pad_token_id=self.tokenizer.pad_token_id,
-                eos_token_id=self.tokenizer.eos_token_id,
+        try:
+            # Format input
+            prompt = f"Problem: {problem}\n\nSolution:"
+            
+            # Tokenize
+            encoded = self.tokenizer.encode(prompt, max_length=self.max_length, truncation=True)
+            input_ids = torch.tensor([encoded['input_ids']]).to(self.device)
+            
+            # Generate - use simpler parameters to avoid issues
+            with torch.no_grad():
+                outputs = self.model.generate(
+                    input_ids,
+                    max_new_tokens=min(self.max_length, 256),  # Limit generation length
+                    temperature=self.temperature,
+                    top_p=self.top_p if self.top_p else None,
+                    do_sample=self.temperature > 0,
+                    eos_token_id=self.tokenizer.eos_token_id,
+                )
+            
+            # Decode
+            generated_text = self.tokenizer.decode(
+                outputs[0][input_ids.shape[1]:].tolist(),
+                skip_special_tokens=True
             )
-        
-        # Decode
-        generated_text = self.tokenizer.decode(
-            outputs[0][inputs.input_ids.shape[1]:],
-            skip_special_tokens=True
-        )
-        
-        return generated_text.strip()
+            
+            return generated_text.strip()
+        except Exception as e:
+            print(f"    Generation error details: {type(e).__name__}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            raise
     
     def evaluate_dataset(
         self,
@@ -139,7 +140,11 @@ class ComprehensiveEvaluator:
             for problem in batch:
                 problem_id = problem.get('problem_id', f'problem_{i}')
                 problem_stmt = problem['problem_statement']
-                ground_truth = problem['solution'].final_answer
+                
+                # Get ground truth if available (None for test data)
+                ground_truth = None
+                if problem.get('solution') is not None and hasattr(problem['solution'], 'final_answer'):
+                    ground_truth = problem['solution'].final_answer
                 
                 # Generate solution
                 try:
@@ -151,9 +156,9 @@ class ComprehensiveEvaluator:
                 # Extract answer
                 extracted = self.answer_extractor.extract(generated)
                 
-                # Check correctness
-                is_correct = False
-                if extracted:
+                # Check correctness (only if ground truth available)
+                is_correct = None
+                if extracted and ground_truth is not None:
                     is_correct = compare_answers(extracted, ground_truth, self.tolerance)
                 
                 # Store results
@@ -217,18 +222,28 @@ class ComprehensiveEvaluator:
     def _compute_overall_metrics(self, results: List[Dict]) -> Dict:
         """Compute overall metrics."""
         total = len(results)
-        correct = sum(1 for r in results if r['is_correct'])
+        # Filter out None values (test data without ground truth)
+        evaluated = [r for r in results if r['is_correct'] is not None]
+        correct = sum(1 for r in evaluated if r['is_correct'])
         answer_found = sum(1 for r in results if r['extracted_answer'] is not None)
         
-        return {
-            'accuracy': correct / total if total > 0 else 0.0,
+        metrics = {
             'total': total,
-            'correct': correct,
-            'incorrect': total - correct,
             'answer_extraction_rate': answer_found / total if total > 0 else 0.0,
             'answer_found': answer_found,
             'answer_not_found': total - answer_found,
         }
+        
+        # Only include accuracy if we have ground truth
+        if evaluated:
+            metrics.update({
+                'accuracy': correct / len(evaluated) if evaluated else 0.0,
+                'evaluated': len(evaluated),
+                'correct': correct,
+                'incorrect': len(evaluated) - correct,
+            })
+        
+        return metrics
     
     def _compute_per_difficulty_metrics(self, results: List[Dict]) -> Dict:
         """Compute metrics per difficulty level."""
@@ -243,14 +258,20 @@ class ComprehensiveEvaluator:
         difficulty_metrics = {}
         for diff, group_results in difficulty_groups.items():
             total = len(group_results)
-            correct = sum(1 for r in group_results if r['is_correct'])
+            # Filter out None values (test data without ground truth)
+            evaluated = [r for r in group_results if r['is_correct'] is not None]
+            correct = sum(1 for r in evaluated if r['is_correct'])
             
             difficulty_metrics[diff] = {
-                'accuracy': correct / total if total > 0 else 0.0,
                 'total': total,
-                'correct': correct,
-                'incorrect': total - correct,
             }
+            
+            if evaluated:
+                difficulty_metrics[diff].update({
+                    'accuracy': correct / len(evaluated) if evaluated else 0.0,
+                    'correct': correct,
+                    'incorrect': len(evaluated) - correct,
+                })
         
         return difficulty_metrics
     
@@ -268,14 +289,20 @@ class ComprehensiveEvaluator:
         topic_metrics = {}
         for topic, group_results in topic_groups.items():
             total = len(group_results)
-            correct = sum(1 for r in group_results if r['is_correct'])
+            # Filter out None values (test data without ground truth)
+            evaluated = [r for r in group_results if r['is_correct'] is not None]
+            correct = sum(1 for r in evaluated if r['is_correct'])
             
             topic_metrics[topic] = {
-                'accuracy': correct / total if total > 0 else 0.0,
                 'total': total,
-                'correct': correct,
-                'incorrect': total - correct,
             }
+            
+            if evaluated:
+                topic_metrics[topic].update({
+                    'accuracy': correct / len(evaluated) if evaluated else 0.0,
+                    'correct': correct,
+                'incorrect': total - correct,
+            })
         
         return topic_metrics
     
@@ -338,10 +365,15 @@ class ComprehensiveEvaluator:
             overall = results['overall']
             f.write("OVERALL PERFORMANCE\n")
             f.write("-" * 40 + "\n")
-            f.write(f"Accuracy:              {overall['accuracy']:.2%}\n")
+            
+            # Only show accuracy if we have ground truth
+            if 'accuracy' in overall:
+                f.write(f"Accuracy:              {overall['accuracy']:.2%}\n")
+                f.write(f"Correct:               {overall['correct']}\n")
+                f.write(f"Incorrect:             {overall['incorrect']}\n")
+                f.write(f"Evaluated:             {overall['evaluated']}\n")
+            
             f.write(f"Total Problems:        {overall['total']}\n")
-            f.write(f"Correct:               {overall['correct']}\n")
-            f.write(f"Incorrect:             {overall['incorrect']}\n")
             f.write(f"Answer Extraction Rate: {overall['answer_extraction_rate']:.2%}\n")
             f.write(f"Answers Found:         {overall['answer_found']}\n")
             f.write(f"Answers Not Found:     {overall['answer_not_found']}\n\n")
@@ -351,7 +383,10 @@ class ComprehensiveEvaluator:
             f.write("-" * 40 + "\n")
             for diff, metrics in results['by_difficulty'].items():
                 f.write(f"{diff}:\n")
-                f.write(f"  Accuracy: {metrics['accuracy']:.2%} ({metrics['correct']}/{metrics['total']})\n")
+                if 'accuracy' in metrics:
+                    f.write(f"  Accuracy: {metrics['accuracy']:.2%} ({metrics['correct']}/{metrics['total']})\n")
+                else:
+                    f.write(f"  Total: {metrics['total']}\n")
             f.write("\n")
             
             # Per-topic metrics
@@ -359,7 +394,10 @@ class ComprehensiveEvaluator:
             f.write("-" * 40 + "\n")
             for topic, metrics in results['by_topic'].items():
                 f.write(f"{topic}:\n")
-                f.write(f"  Accuracy: {metrics['accuracy']:.2%} ({metrics['correct']}/{metrics['total']})\n")
+                if 'accuracy' in metrics:
+                    f.write(f"  Accuracy: {metrics['accuracy']:.2%} ({metrics['correct']}/{metrics['total']})\n")
+                else:
+                    f.write(f"  Total: {metrics['total']}\n")
             f.write("\n")
             
             # Error analysis
@@ -392,19 +430,36 @@ class ComprehensiveEvaluator:
         print("=" * 80)
         
         overall = results['overall']
-        print(f"\n✅ Overall Accuracy: {overall['accuracy']:.2%}")
-        print(f"   Correct: {overall['correct']}/{overall['total']}")
+        
+        # Only show accuracy if we have ground truth
+        if 'accuracy' in overall:
+            print(f"\n✅ Overall Accuracy: {overall['accuracy']:.2%}")
+            print(f"   Correct: {overall['correct']}/{overall['evaluated']}")
+        
+        print(f"\n📝 Total Problems: {overall['total']}")
         print(f"   Answer Extraction Rate: {overall['answer_extraction_rate']:.2%}")
+        print(f"   Answers Found: {overall['answer_found']}/{overall['total']}")
         
-        print("\n📈 Performance by Difficulty:")
-        for diff, metrics in sorted(results['by_difficulty'].items()):
-            print(f"   {diff:15s}: {metrics['accuracy']:.2%} ({metrics['correct']}/{metrics['total']})")
+        if results['by_difficulty']:
+            print("\n📈 Performance by Difficulty:")
+            for diff, metrics in sorted(results['by_difficulty'].items()):
+                if 'accuracy' in metrics:
+                    print(f"   {diff:15s}: {metrics['accuracy']:.2%} ({metrics['correct']}/{metrics['total']})")
+                else:
+                    print(f"   {diff:15s}: {metrics['total']} problems")
         
-        print("\n📚 Top Topics by Accuracy:")
-        topic_items = list(results['by_topic'].items())
-        topic_items.sort(key=lambda x: x[1]['accuracy'], reverse=True)
-        for topic, metrics in topic_items[:5]:
-            print(f"   {topic:20s}: {metrics['accuracy']:.2%} ({metrics['correct']}/{metrics['total']})")
+        if results['by_topic']:
+            print("\n📚 Top Topics:")
+            topic_items = list(results['by_topic'].items())
+            # Sort by accuracy if available, otherwise by total count
+            if topic_items and 'accuracy' in topic_items[0][1]:
+                topic_items.sort(key=lambda x: x[1].get('accuracy', 0), reverse=True)
+                for topic, metrics in topic_items[:5]:
+                    print(f"   {topic:20s}: {metrics['accuracy']:.2%} ({metrics['correct']}/{metrics['total']})")
+            else:
+                topic_items.sort(key=lambda x: x[1]['total'], reverse=True)
+                for topic, metrics in topic_items[:5]:
+                    print(f"   {topic:20s}: {metrics['total']} problems")
         
         print("\n⚠️ Error Analysis:")
         error_analysis = results['error_analysis']

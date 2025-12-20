@@ -20,33 +20,48 @@ from src.tokenizer.math_tokenizer import MathTokenizer
 from src.config.model_config import MathTransformerConfig
 from src.evaluation.comprehensive_evaluator import ComprehensiveEvaluator
 from src.evaluation.kaggle_submission import KaggleSubmissionGenerator
-from src.data.dataset import load_test_dataset
-
 
 def load_model(checkpoint_path: str, config_name: str = "small"):
     """Load trained model from checkpoint."""
     print(f"\n📦 Loading model from {checkpoint_path}...")
     
-    # Load config
-    config = MathTransformerConfig.get_config(config_name)
+    # Load checkpoint first
+    checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=False)
+    
+    # Load config from checkpoint if available, otherwise use config_name
+    if 'config' in checkpoint:
+        config = checkpoint['config']
+        print("   Using config from checkpoint")
+    else:
+        from src.config.model_config import get_small_config, get_base_config
+        if config_name == "small":
+            config = get_small_config()
+        elif config_name == "base":
+            config = get_base_config()
+        else:
+            config = MathTransformerConfig()
+        print(f"   Using {config_name} config")
     
     # Initialize tokenizer
     tokenizer = MathTokenizer()
-    config.vocab_size = len(tokenizer)
     
-    # Initialize model
+    # Update vocab size if needed
+    if config.vocab_size != len(tokenizer):
+        print(f"   Warning: Config vocab_size ({config.vocab_size}) != tokenizer vocab_size ({len(tokenizer)})")
+        print(f"   Using checkpoint vocab_size: {config.vocab_size}")
+    
+    # Initialize model with config from checkpoint
     model = MathTransformerDecoder(config)
     
-    # Load checkpoint
-    checkpoint = torch.load(checkpoint_path, map_location='cpu')
-    
+    # Load state dict
     if 'model_state_dict' in checkpoint:
         model.load_state_dict(checkpoint['model_state_dict'])
     else:
         model.load_state_dict(checkpoint)
     
     print("✅ Model loaded successfully")
-    print(f"   Config: {config_name}")
+    print(f"   Layers: {config.num_hidden_layers}")
+    print(f"   Hidden size: {config.hidden_size}")
     print(f"   Vocab size: {config.vocab_size}")
     print(f"   Parameters: {sum(p.numel() for p in model.parameters()):,}")
     
@@ -70,7 +85,17 @@ def evaluate_on_test_set(args):
     
     # Load test data
     print(f"\n📚 Loading test data from {args.test_data}...")
-    test_problems = load_test_dataset(args.test_data)
+    import pandas as pd
+    df = pd.read_csv(args.test_data)
+    
+    # Convert to list of dictionaries
+    test_problems = []
+    for _, row in df.iterrows():
+        test_problems.append({
+            'problem_id': row['id'] if 'id' in df.columns else f"problem_{_}",
+            'problem_statement': row['problem'] if 'problem' in df.columns else row.get('problem_statement', ''),
+            'solution': type('obj', (object,), {'final_answer': None})()  # Dummy solution for test data
+        })
     
     # Run evaluation
     results = evaluator.evaluate_dataset(
