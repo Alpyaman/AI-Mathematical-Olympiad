@@ -23,6 +23,7 @@ class ChainOfThoughtFormatter:
         include_step_numbers: bool = True,
         include_justifications: bool = True,
         add_verification: bool = True,
+        add_eos_token: bool = True
     ):
         """
         Initialize the CoT formatter.
@@ -37,6 +38,7 @@ class ChainOfThoughtFormatter:
         self.include_step_numbers = include_step_numbers
         self.include_justifications = include_justifications
         self.add_verification = add_verification
+        self.add_eos_token = add_eos_token
 
     def format_problem(self, problem: MathProblem, include_solution: bool = True) -> str:
         """
@@ -60,7 +62,11 @@ class ChainOfThoughtFormatter:
         if include_solution:
             parts.append(self.format_solution(problem.solution))
 
+        # Add EOS token based on configuration
         if self.use_special_tokens:
+            parts.append("<eos>")
+        elif self.add_eos_token:
+            # Add EOS token even when special tokens are disabled
             parts.append("<eos>")
 
         return "\n\n".join(parts)
@@ -223,7 +229,8 @@ class ProblemFormatter:
             use_special_tokens=False,
             include_step_numbers=True,
             include_justifications=True,
-            add_verification=True
+            add_verification=True,
+            add_eos_token=False
         )
         return formatter.format_problem(problem, include_solution=True)
 
